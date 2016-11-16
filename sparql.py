@@ -1,9 +1,17 @@
 #!/usr/bin/env python
 
-"""First argument is endpoint if it looks like a URL, remaining args
-are names of files with SPARQL queries. Sends query in file F to the
-endpoint and writes response to file F.out. Example:
+"""
+
+A simple script to run one or more sparql queries on an endpoint and
+save the results as json and html. Examples
+
   python sparql.py http://dbpedia.org/sparql myquery.txt
+  python sparql.py q*.txt  
+
+First argument is endpoint if it looks like a URL, remaining args
+are names of files with SPARQL queries. Sends query in file F to the
+endpoint and writes results to files F.json and F.html
+
 """
 
 import sys, urllib, json
@@ -27,6 +35,18 @@ def ask_query(query, endpoint=default_endpoint, format=default_format):
     except:
         return None
 
+def number_results (json_obj):
+    """ Returns the number of results in a json object returned by a
+    sparql endpoint """
+    if 'head' in json_obj:
+        # the json is from a select sparql query
+        return len(data['results']['bindings'])
+    else:
+        # the json is from a construct sparql query
+        return len(json_obj)
+                  
+
+
 def json2html(data):
     """ Constructs an HTML table string from a json object resulting from a sparql query"""
     html = ''
@@ -47,6 +67,7 @@ def json2html(data):
 
     return '<table border="1">' + html + '</table>'
 
+
 def linkify(string):
     """ if string looks like a URI, turn it into a link """
     result = '<a href="%s">%s</a>' % (string, string) if string.startswith('http://') else string
@@ -57,14 +78,12 @@ def output(file, endpoint):
     print 'query', file
     data = ask_query(open(file).read(), endpoint)
     if data:
-        out_html = open(file+".html", 'w')
-        out_json = open(file+".json", 'w')    
-        out_json.write(json.dumps(data))
-        out_html.write("<html><body>"+json2html(data)+"</body></html>")
-        out_html.close()
-        out_json.close()
+        with open(file+".html", 'w') as HOUT, open(file+".json", 'w') as JOUT:
+            print 'Query returned', number_results(data), 'results'
+            JOUT.write(json.dumps(data))
+            HOUT.write("<html><body>"+json2html(data)+"</body></html>")
     else:
-        print 'query failed'
+        print 'Query failed'
         
 
 def main():
