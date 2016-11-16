@@ -40,7 +40,7 @@ def number_results (json_obj):
     sparql endpoint """
     if 'head' in json_obj:
         # the json is from a select sparql query
-        return len(data['results']['bindings'])
+        return len(json_obj['results']['bindings'])
     else:
         # the json is from a construct sparql query
         return len(json_obj)
